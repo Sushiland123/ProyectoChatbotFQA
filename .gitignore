@@ -1,0 +1,132 @@
+# ===== CREDENCIALES Y ARCHIVOS SENSIBLES =====
+# Dialogflow credentials (IMPORTANTE)
+**/dialogflow-key.json
+**/config/dialogflow-key.json
+**/config/*-key.json
+**/credentials.json
+**/service-account*.json
+
+# Variables de entorno
+**/.env
+**/.env.*
+.env
+.env.*
+
+# Archivos de configuración sensibles
+**/config/database.json
+**/config/secrets.json
+
+# ===== NODE.JS =====
+# Dependencies
+**/node_modules/
+node_modules/
+
+# Build outputs
+**/dist/
+**/build/
+dist/
+build/
+
+# Logs
+logs
+*.log
+**/logs/
+**/*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+**/coverage/
+**/.nyc_output/
+
+# ===== IDEs Y EDITORES =====
+# VSCode
+.vscode/
+**/.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# IntelliJ IDEA
+.idea/
+**/.idea/
+*.iml
+*.ipr
+*.iws
+
+# Sublime Text
+*.sublime-workspace
+*.sublime-project
+
+# Vim
+*.swp
+*.swo
+*~
+
+# ===== SISTEMA OPERATIVO =====
+# macOS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Linux
+*~
+
+# ===== TEMPORALES =====
+# Temp directories
+.temp/
+.tmp/
+**/temp/
+**/tmp/
+
+# Cache
+.cache/
+**/.cache/
+
+# ===== DOCKER =====
+# Docker
+.dockerignore
+Dockerfile.prod
+
+# ===== TESTING =====
+# Test coverage
+coverage/
+**/coverage/
+
+# ===== MICROSERVICIOS ESPECÍFICOS =====
+# Package manager locks (opcional, dependiendo de tu estrategia)
+# package-lock.json
+# yarn.lock
+
+# Build artifacts de cada servicio
+**/dist/
+**/out/
+
+# ===== OTROS =====
+# Backup files
+*.bak
+*.backup
+
+# Database files (si usas SQLite local)
+*.db
+*.sqlite
+*.sqlite3

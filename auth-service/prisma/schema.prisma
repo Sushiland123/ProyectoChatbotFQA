@@ -1,0 +1,67 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id        Int      @id @default(autoincrement())
+  nombre    String
+  email     String   @unique
+  password  String
+  rol       Rol      @default(USUARIO)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Cliente {
+  id        Int      @id @default(autoincrement())
+  nombre    String
+  correo    String
+  dui       String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tickets      Ticket[]
+  interacciones Interaccion[]
+}
+
+model Ticket {
+  id         Int      @id @default(autoincrement())
+  asunto     String
+  estado     Estado   @default(PENDIENTE)
+  clienteId  Int
+  createdAt  DateTime @default(now())
+
+  cliente Cliente @relation(fields: [clienteId], references: [id])
+}
+
+model Interaccion {
+  id           Int      @id @default(autoincrement())
+  clienteId    Int?
+  origen       Origen   // 'DIALOGFLOW' o 'IA'
+  sessionId    String
+  escalado     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  cliente Cliente? @relation(fields: [clienteId], references: [id])
+}
+
+enum Rol {
+  ADMIN
+  USUARIO
+}
+
+enum Estado {
+  PENDIENTE
+  EN_PROCESO
+  LISTO
+}
+
+enum Origen {
+  DIALOGFLOW
+  IA
+}
