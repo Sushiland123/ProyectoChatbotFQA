@@ -1,9 +1,13 @@
 import { Controller, Get } from '@nestjs/common';
 import { AppService } from './app.service';
+import { HealthService } from './health/health.service';
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(
+    private readonly appService: AppService,
+    private readonly healthService: HealthService,
+  ) {}
 
   @Get()
   getHello(): string {
@@ -11,13 +15,7 @@ export class AppController {
   }
 
   @Get('health')
-  healthCheck(): object {
-    return { 
-      status: 'ok', 
-      service: 'chatbot-service',
-      timestamp: new Date().toISOString(),
-      uptime: process.uptime(),
-      environment: process.env.NODE_ENV || 'development'
-    };
+  async healthCheck() {
+    return await this.healthService.checkHealth();
   }
 }

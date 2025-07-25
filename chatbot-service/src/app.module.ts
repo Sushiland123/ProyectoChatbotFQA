@@ -14,6 +14,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { WhatsappService } from './whatsapp/whatsapp.service';
 import { WhatsappModule } from './whatsapp/whatsapp.module';
 import { AnalyticsController } from './analytics/analytics.controller';
+import { HealthService } from './health/health.service';
 
 
 @Module({
@@ -28,6 +29,6 @@ import { AnalyticsController } from './analytics/analytics.controller';
 
   ],
   controllers: [AppController, ChatController, AnalyticsController], // ✅ Ambos controllers
-  providers: [AppService, TicketService, MailService, PrismaService, WhatsappService],                      // ✅ AppService
+  providers: [AppService, TicketService, MailService, PrismaService, WhatsappService, HealthService],                      // ✅ AppService
 })
 export class AppModule {}

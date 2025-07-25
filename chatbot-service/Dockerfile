@@ -1,28 +1,43 @@
-# Use Node.js official image
-FROM node:20-alpine
+# Build stage
+FROM node:18-alpine AS builder
 
-
-# Set the working directory
 WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
-COPY .npmrc ./
+COPY prisma ./prisma/
 
 # Install dependencies
-RUN npm install --legacy-peer-deps
+RUN npm ci --only=production && \
+    npm install -g @nestjs/cli prisma && \
+    npx prisma generate
 
-# Copy the rest of the application
+# Copy source code
 COPY . .
-
-# Generate Prisma client
-RUN npx prisma generate
 
 # Build the application
 RUN npm run build
 
-# Expose the port
+# Production stage
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Copy built application
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/prisma ./prisma
+
+# Generate Prisma Client
+RUN npx prisma generate
+
+# Expose port
 EXPOSE 3003
 
-# Start the application with safe script
-CMD ["npm", "run", "start:railway:safe"]
+# Health check
+HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
+    CMD node -e "require('http').get('http://localhost:3003/health', (res) => process.exit(res.statusCode === 200 ? 0 : 1))"
+
+# Start the application
+CMD ["node", "dist/main"]
