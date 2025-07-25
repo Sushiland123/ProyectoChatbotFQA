@@ -1,28 +1,30 @@
 import { Injectable } from '@nestjs/common';
 import * as dialogflow from 'dialogflow';
-import { DialogflowConfig } from './dialogflow.config';
 
 @Injectable()
 export class DialogflowService {
   private sessionClient: dialogflow.SessionsClient;
   private projectId: string;
-  private dialogflowConfig: DialogflowConfig;
 
   constructor() {
-    this.dialogflowConfig = new DialogflowConfig();
-    this.projectId = this.dialogflowConfig.getProjectId();
-
     try {
-      const credentials = this.dialogflowConfig.getCredentials();
+      const key = process.env.DIALOGFLOW_KEY;
+      if (!key) {
+        throw new Error('❌ Variable DIALOGFLOW_KEY no está definida');
+      }
+
+      const credentials = JSON.parse(key);
+      credentials.private_key = credentials.private_key.replace(/\\n/g, '\n');
+
+      this.projectId = credentials.project_id;
 
       this.sessionClient = new dialogflow.SessionsClient({
         credentials,
-        projectId: this.projectId,
       });
 
-      console.log('✅ Dialogflow configurado con variables de entorno');
+      console.log('✅ Dialogflow configurado desde DIALOGFLOW_KEY');
     } catch (error) {
-      console.error('❌ Error configurando Dialogflow:', error);
+      console.error('❌ Error al inicializar Dialogflow:', error);
       throw new Error(`Failed to initialize Dialogflow: ${error.message}`);
     }
   }
@@ -44,14 +46,28 @@ export class DialogflowService {
       const responses = await this.sessionClient.detectIntent(request);
       const result = responses[0].queryResult;
 
+      const intentName = result.intent?.displayName || 'No Intent';
+      const response = result.fulfillmentText || '';
+      const isFallback = result.intent?.isFallback || false;
+      const confidence = result.intentDetectionConfidence || 0;
+
+      console.log(`🎯 Dialogflow - Intent: ${intentName}, Confidence: ${confidence.toFixed(2)}, Fallback: ${isFallback}`);
+
       return {
-        intent: result.intent?.displayName || 'Default',
-        response: result.fulfillmentText,
-        isFallback: result.intent?.isFallback || false,
+        intent: intentName,
+        response: response,
+        isFallback: isFallback,
+        confidence: confidence,
       };
     } catch (error) {
       console.error('❌ Error en Dialogflow detectIntent:', error);
-      throw new Error(`Dialogflow detection failed: ${error.message}`);
+      // En caso de error, retornar como fallback para que use IA
+      return {
+        intent: 'Error',
+        response: '',
+        isFallback: true,
+        confidence: 0,
+      };
     }
   }
 }

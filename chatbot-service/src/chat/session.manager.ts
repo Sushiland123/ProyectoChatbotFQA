@@ -1,6 +1,8 @@
 // session.manager.ts
 type SessionState = {
   waitingForContact?: boolean;
+  failedAttempts?: number;
+  lastFailedResponse?: string;
 };
 
 export class SessionManager {
@@ -12,6 +14,13 @@ export class SessionManager {
 
   set(sessionId: string, state: SessionState) {
     this.sessions.set(sessionId, state);
+  }
+
+  incrementFailedAttempts(sessionId: string, response: string) {
+    const session = this.get(sessionId);
+    session.failedAttempts = (session.failedAttempts || 0) + 1;
+    session.lastFailedResponse = response;
+    this.set(sessionId, session);
   }
 
   clear(sessionId: string) {

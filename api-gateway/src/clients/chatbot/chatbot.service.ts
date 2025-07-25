@@ -4,9 +4,11 @@ import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class ChatbotClientService {
-  private baseUrl = process.env.CHATBOT_SERVICE_URL || 'http://chatbot-service.railway.internal:3003';
+  private baseUrl = process.env.CHATBOT_SERVICE_URL || 'http://localhost:3003';
 
-  constructor(private readonly http: HttpService) {}
+  constructor(private readonly http: HttpService) {
+    console.log('🔗 Chatbot Service URL:', this.baseUrl);
+  }
 
   async sendMessage(data: any, userId?: string) {
     try {
@@ -15,11 +17,20 @@ export class ChatbotClientService {
         headers['x-user-id'] = userId;
       }
 
+      console.log('📤 Enviando mensaje al chatbot:', { url: `${this.baseUrl}/chat/message`, data });
+      
       const res = await firstValueFrom(
         this.http.post(`${this.baseUrl}/chat/message`, data, { headers }),
       );
+      
+      console.log('📥 Respuesta del chatbot:', res.data);
       return res.data;
     } catch (error) {
+      console.error('❌ Error al comunicarse con chatbot-service:', error.message);
+      if (error.response) {
+        console.error('Response status:', error.response.status);
+        console.error('Response data:', error.response.data);
+      }
       throw error;
     }
   }

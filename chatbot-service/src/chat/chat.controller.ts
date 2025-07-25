@@ -84,7 +84,14 @@ export class ChatController {
       }
 
       const { dui, correo } = parsed;
-      const ticket = await this.ticketService.createTicket('Solicitud escalada desde el chat', dui);
+      
+      // Crear un asunto más descriptivo con el contexto de la conversación
+      let asunto = 'Solicitud escalada desde el chat';
+      if (session.lastFailedResponse) {
+        asunto = `Chat escalado: ${query.substring(0, 50)}...`;
+      }
+      
+      const ticket = await this.ticketService.createTicket(asunto, dui);
 
       if ('error' in ticket) {
         return { error: ticket.error };
@@ -102,28 +109,65 @@ export class ChatController {
 
       sessionManager.clear(sessionId);
       return {
-        message: `✅ Se ha generado el ticket #${ticket.id}. Recibirá actualizaciones en ${correo}.`,
+        message: `✅ Se ha generado el ticket de soporte #${ticket.id}.\n🎧 Nuestro equipo de soporte le contactará pronto.\n📧 Recibirá actualizaciones en ${correo}.\n\n¡Gracias por su paciencia!`,
       };
     }
 
     // Verificar frases que indiquen que necesita escalar
-    const needsEscalation = ['no entiendo', 'sigo sin entender', 'no me ayudó'].some((p) =>
+    const needsEscalation = ['no entiendo', 'sigo sin entender', 'no me ayudó', 'no me sirve', 'quiero hablar con alguien'].some((p) =>
       query.toLowerCase().includes(p),
     );
 
     if (needsEscalation) {
       sessionManager.set(sessionId, { waitingForContact: true });
       return {
-        message: '¿Desea escalar su problema a soporte? Por favor, envíe su DUI y correo electrónico.',
+        message: '🎧 Entiendo que necesita ayuda adicional. ¿Desea escalar su problema a soporte humano? Por favor, envíe su DUI y correo electrónico en el formato: 01234567-8 correo@ejemplo.com',
       };
     }
 
     // Intentar con Dialogflow
     const result = await this.dialogflowService.detectIntent(query, sessionId);
 
-    if (result.intent === 'Default') {
-      // Si no hay intención clara, usar IA
-      const aiResponse = await this.aiService.getResponse(query);
+    // Verificar si necesita fallback a IA
+    const shouldUseAI = 
+      result.intent === 'Default' || 
+      result.intent === 'Default Fallback Intent' ||
+      result.isFallback ||
+      !result.intent ||
+      result.intent === 'projects/conectaya-bot/agent/intents/default' ||
+      !result.response ||
+      result.response.trim() === '' ||
+      result.response.includes('No entendí') ||
+      result.response.includes('No comprendo') ||
+      result.response.includes('default fallback');
+
+    if (shouldUseAI) {
+      console.log('🤖 Usando IA como fallback para:', query);
+      // Si no hay intención clara o es fallback, usar IA
+      const aiResult = await this.aiService.getResponse(query);
+
+      // Verificar si la IA también falló
+      if (aiResult.isFallback) {
+        sessionManager.incrementFailedAttempts(sessionId, aiResult.response);
+        const currentSession = sessionManager.get(sessionId);
+        
+        // Si ya hubo 2 o más intentos fallidos, ofrecer escalamiento
+        if (currentSession.failedAttempts && currentSession.failedAttempts >= 2) {
+          sessionManager.set(sessionId, { waitingForContact: true });
+          return {
+            message: '🤔 Parece que estoy teniendo dificultades para ayudarle con su consulta específica. ¿Le gustaría que escalemos esto a nuestro equipo de soporte? Por favor, proporcione su DUI y correo electrónico en el formato: 01234567-8 correo@ejemplo.com',
+          };
+        } else {
+          return {
+            message: `${aiResult.response}\n\n💡 Si esta respuesta no le ayuda, puedo conectarle con soporte humano. Simplemente escriba "no me ayudó" o "quiero hablar con alguien".`,
+          };
+        }
+      }
+
+      // Respuesta exitosa de la IA, resetear contadores
+      if (session.failedAttempts) {
+        sessionManager.set(sessionId, { failedAttempts: 0 });
+      }
 
       await this.prisma.interaccion.create({
         data: {
@@ -132,7 +176,14 @@ export class ChatController {
         },
       });
 
-      return { message: aiResponse };
+      return { message: aiResult.response };
+    }
+
+    console.log('✅ Respuesta de Dialogflow:', result.intent);
+    // Respuesta válida de Dialogflow, resetear contadores
+    const currentSession2 = sessionManager.get(sessionId);
+    if (currentSession2.failedAttempts) {
+      sessionManager.set(sessionId, { failedAttempts: 0 });
     }
 
     // Respuesta válida de Dialogflow

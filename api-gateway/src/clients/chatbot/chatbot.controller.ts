@@ -20,8 +20,8 @@ import {
 import { ChatbotClientService } from './chatbot.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
-@ApiTags('Chatbot')
-@Controller('chatbot')
+@ApiTags('Chat')
+@Controller('chat')
 export class ChatbotController {
   constructor(private readonly chatbotService: ChatbotClientService) {}
 
