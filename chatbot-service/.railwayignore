@@ -1,5 +1,11 @@
-../package.json
 ../start-dev.bat
 ../start-dev.sh
 ../node_modules
 ../.git
+../*.bat
+../*.sh
+../*.md
+../run-tests*
+../deploy-railway*
+../docker-compose.yml
+../postman-collection.json

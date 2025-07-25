@@ -14,8 +14,17 @@ async function bootstrap() {
   }));
 
   // Configuración de CORS
+  const allowedOrigins = process.env.NODE_ENV === 'production' 
+    ? [
+        'https://api-gateway-production-149b.up.railway.app',
+        'http://api-gateway.railway.internal:3000',
+        'http://localhost:3000',
+        'http://localhost:3001'
+      ]
+    : ['http://localhost:3000', 'http://localhost:3001'];
+
   app.enableCors({
-    origin: ['http://localhost:3000', 'http://localhost:3001'],
+    origin: allowedOrigins,
     credentials: true,
   });
 
@@ -79,6 +88,18 @@ async function bootstrap() {
   console.log(`📊 Analytics disponible en puerto ${port}/analytics`);
   console.log(`🤖 Chat disponible en puerto ${port}/chat/message`);
   console.log(`📚 Documentación Swagger disponible en puerto ${port}/api/docs`);
+  
+  // Logs para debugging en Railway
+  console.log('✅ Variables de entorno cargadas:');
+  console.log(`- NODE_ENV: ${process.env.NODE_ENV}`);
+  console.log(`- DATABASE_URL: ${process.env.DATABASE_URL ? '✅ Configurada' : '❌ Faltante'}`);
+  console.log(`- OPENAI_API_KEY: ${process.env.OPENAI_API_KEY ? '✅ Configurada' : '❌ Faltante'}`);
+  console.log(`- TWILIO_ACCOUNT_SID: ${process.env.TWILIO_ACCOUNT_SID ? '✅ Configurada' : '❌ Faltante'}`);
+  console.log(`- GOOGLE_PROJECT_ID: ${process.env.GOOGLE_PROJECT_ID ? '✅ Configurada' : '❌ Faltante'}`);
 }
 
-bootstrap();
+bootstrap().catch(error => {
+  console.error('❌ Error al iniciar Chatbot Service:', error);
+  console.error('Stack trace:', error.stack);
+  process.exit(1);
+});

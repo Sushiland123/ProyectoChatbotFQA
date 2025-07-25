@@ -12,6 +12,12 @@ export class AppController {
 
   @Get('health')
   healthCheck(): object {
-    return { status: 'ok', service: 'chatbot-service', timestamp: new Date().toISOString() };
+    return { 
+      status: 'ok', 
+      service: 'chatbot-service',
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      environment: process.env.NODE_ENV || 'development'
+    };
   }
 }
