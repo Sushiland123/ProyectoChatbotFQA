@@ -14,22 +14,33 @@ export class DialogflowService {
     this.projectId = this.dialogflowConfig.getProjectId();
 
     try {
-      // En Railway/producción, usar variables de entorno
+      // Producción: usar variable DIALOGFLOW_KEY como JSON string
       if (process.env.NODE_ENV === 'production' || process.env.RAILWAY_ENVIRONMENT) {
-        const credentials = this.dialogflowConfig.getCredentials();
-        
+        const credentialsString = process.env.DIALOGFLOW_KEY;
+        if (!credentialsString) {
+          throw new Error('❌ Falta la variable DIALOGFLOW_KEY en entorno de producción');
+        }
+
+        const credentials = JSON.parse(credentialsString);
+
         this.sessionClient = new dialogflow.SessionsClient({
-          credentials: credentials,
+          credentials,
           projectId: this.projectId,
         });
-        console.log('✅ Dialogflow configurado con variables de entorno para Railway');
+
+        console.log('✅ Dialogflow configurado con variable DIALOGFLOW_KEY (producción)');
       } else {
-        // En desarrollo local, usar archivo JSON
-        const keyPath = path.join(__dirname, '../../config/dialogflow-key.json');
-        this.sessionClient = new dialogflow.SessionsClient({
-          keyFilename: keyPath,
-        });
-        console.log('✅ Dialogflow configurado con archivo JSON local');
+        // Desarrollo local: usar archivo JSON
+        try {
+          const keyPath = path.join(__dirname, '../../config/dialogflow-key.json');
+          this.sessionClient = new dialogflow.SessionsClient({
+            keyFilename: keyPath,
+          });
+          console.log('✅ Dialogflow configurado con archivo local dialogflow-key.json');
+        } catch (error) {
+          console.error('❌ No se encontró el archivo dialogflow-key.json en desarrollo:', error);
+          throw new Error('Falta el archivo dialogflow-key.json en entorno local.');
+        }
       }
     } catch (error) {
       console.error('❌ Error configurando Dialogflow:', error);
