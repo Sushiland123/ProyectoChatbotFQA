@@ -7,6 +7,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Modelo de Usuario (usado por auth-service)
 model Usuario {
   id        Int      @id @default(autoincrement())
   nombre    String
@@ -17,6 +18,7 @@ model Usuario {
   updatedAt DateTime @updatedAt
 }
 
+// Modelos del chatbot-service
 model Cliente {
   id        Int      @id @default(autoincrement())
   nombre    String
@@ -50,6 +52,27 @@ model Interaccion {
   cliente Cliente? @relation(fields: [clienteId], references: [id])
 }
 
+// Modelos del faq-service
+model GrupoFAQ {
+  id        Int                 @id @default(autoincrement())
+  nombre    String              @unique
+  preguntas PreguntaFrecuente[]
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
+}
+
+model PreguntaFrecuente {
+  id         Int       @id @default(autoincrement())
+  pregunta   String
+  respuesta  String
+  multimedia String?
+  grupoId    Int
+  grupo      GrupoFAQ  @relation(fields: [grupoId], references: [id])
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+}
+
+// Enums
 enum Rol {
   ADMIN
   USUARIO

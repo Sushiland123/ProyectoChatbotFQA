@@ -7,6 +7,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Modelo de Usuario (usado por auth-service)
 model Usuario {
   id        Int      @id @default(autoincrement())
   nombre    String
@@ -17,11 +18,41 @@ model Usuario {
   updatedAt DateTime @updatedAt
 }
 
-enum Rol {
-  ADMIN
-  USUARIO
+// Modelos del chatbot-service
+model Cliente {
+  id        Int      @id @default(autoincrement())
+  nombre    String
+  correo    String
+  dui       String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tickets      Ticket[]
+  interacciones Interaccion[]
 }
 
+model Ticket {
+  id         Int      @id @default(autoincrement())
+  asunto     String
+  estado     Estado   @default(PENDIENTE)
+  clienteId  Int
+  createdAt  DateTime @default(now())
+
+  cliente Cliente @relation(fields: [clienteId], references: [id])
+}
+
+model Interaccion {
+  id           Int      @id @default(autoincrement())
+  clienteId    Int?
+  origen       Origen   // 'DIALOGFLOW' o 'IA'
+  sessionId    String
+  escalado     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+
+  cliente Cliente? @relation(fields: [clienteId], references: [id])
+}
+
+// Modelos del faq-service
 model GrupoFAQ {
   id        Int                 @id @default(autoincrement())
   nombre    String              @unique
@@ -39,4 +70,21 @@ model PreguntaFrecuente {
   grupo      GrupoFAQ  @relation(fields: [grupoId], references: [id])
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
+}
+
+// Enums
+enum Rol {
+  ADMIN
+  USUARIO
+}
+
+enum Estado {
+  PENDIENTE
+  EN_PROCESO
+  LISTO
+}
+
+enum Origen {
+  DIALOGFLOW
+  IA
 }
