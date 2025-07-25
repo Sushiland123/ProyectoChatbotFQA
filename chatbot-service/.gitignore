@@ -45,7 +45,11 @@ lerna-debug.log*
 #dialogflow
 dialogflow-key.json
 config/dialogflow-key.json
+# Ignora los JSON sensibles excepto package.json
+!package.json
+!package-lock.json
 *.json
+
 
 # temp directory
 .temp
