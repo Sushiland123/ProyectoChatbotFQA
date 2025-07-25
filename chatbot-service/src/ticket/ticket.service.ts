@@ -46,11 +46,15 @@ export class TicketService {
         `Tu ticket con ID ${ticket.id} ha cambiado de estado a EN PROCESO. Pronto recibirás una solución.`,
       );
     } else if (estado === 'LISTO') {
+      // Enviar notificación de resolución
       await this.mailService.sendMail(
         correo,
         'Tu ticket ha sido resuelto',
         `Tu ticket con ID ${ticket.id} ha sido marcado como LISTO. Solución: ${mensajeFinal || 'No se proporcionó un detalle.'}`,
       );
+
+      // Enviar encuesta de satisfacción
+      await this.enviarEncuestaSatisfaccion(ticket.id, correo);
     }
 
     return ticket;
@@ -60,5 +64,39 @@ export class TicketService {
     return await this.prisma.ticket.findMany({
       include: { cliente: true },
     });
+  }
+
+  private async enviarEncuestaSatisfaccion(ticketId: number, correo: string) {
+    const encuestaUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/encuesta/${ticketId}`;
+    
+    const mensaje = `
+🎯 ENCUESTA DE SATISFACCIÓN
+
+Hola! Tu ticket #${ticketId} ha sido resuelto.
+
+¿Qué tal fue nuestra atención? Tu opinión es muy importante para nosotros.
+
+👆 Califica nuestro servicio (1-5 estrellas):
+⭐ (1) Muy malo
+⭐⭐ (2) Malo  
+⭐⭐⭐ (3) Regular
+⭐⭐⭐⭐ (4) Bueno
+⭐⭐⭐⭐⭐ (5) Excelente
+
+📝 Para calificar, responde a este correo con el número de estrellas (1-5).
+
+¡Gracias por confiar en nosotros!
+
+---
+Equipo de Soporte Técnico
+`;
+
+    await this.mailService.sendMail(
+      correo,
+      '⭐ Califica nuestro servicio - Ticket #' + ticketId,
+      mensaje
+    );
+
+    console.log(`📧 Encuesta enviada para ticket ${ticketId} a ${correo}`);
   }
 }

@@ -8,14 +8,16 @@ import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class AuthClientService {
-  private baseUrl = process.env.AUTH_SERVICE_URL || 'http://auth-service.railway.internal:3001/auth';
+  private baseUrl = process.env.AUTH_SERVICE_URL || 'http://localhost:3001';
 
-  constructor(private readonly http: HttpService) {}
+  constructor(private readonly http: HttpService) {
+    console.log('🔗 Auth Service URL:', this.baseUrl);
+  }
 
   async register(data: any) {
     try {
       const res = await firstValueFrom(
-        this.http.post(`${this.baseUrl}/register`, data),
+        this.http.post(`${this.baseUrl}/auth/register`, data),
       );
       return res.data;
     } catch (error) {
@@ -26,7 +28,7 @@ export class AuthClientService {
   async login(data: any) {
     try {
       const res = await firstValueFrom(
-        this.http.post(`${this.baseUrl}/login`, data),
+        this.http.post(`${this.baseUrl}/auth/login`, data),
       );
       return res.data;
     } catch (error) {
@@ -37,7 +39,7 @@ export class AuthClientService {
   async profile(token: string) {
     try {
       const res = await firstValueFrom(
-        this.http.get(`${this.baseUrl}/profile`, {
+        this.http.get(`${this.baseUrl}/auth/profile`, {
           headers: { Authorization: `Bearer ${token}` },
         }),
       );

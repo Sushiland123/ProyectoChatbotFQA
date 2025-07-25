@@ -13,6 +13,9 @@ import { FaqClientService } from './clients/faq/faq.service';
 import { ChatbotController } from './clients/chatbot/chatbot.controller';
 import { ChatbotClientService } from './clients/chatbot/chatbot.service';
 
+import { TicketController } from './clients/ticket/ticket.controller';
+import { TicketClientService } from './clients/ticket/ticket.service';
+
 import { JwtStrategy } from './clients/auth/jwt.strategy';
 
 @Module({
@@ -25,11 +28,13 @@ import { JwtStrategy } from './clients/auth/jwt.strategy';
     AuthController,
     FaqController,
     ChatbotController,
+    TicketController,
   ],
   providers: [
     AuthClientService,
     FaqClientService,
     ChatbotClientService,
+    TicketClientService,
     JwtStrategy,
   ],
 })

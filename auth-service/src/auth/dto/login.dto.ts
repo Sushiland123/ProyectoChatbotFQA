@@ -14,10 +14,8 @@ export class LoginDto {
   @ApiProperty({
     description: 'Contraseña del usuario',
     example: '123456',
-    minLength: 6,
   })
   @IsString()
   @IsNotEmpty({ message: 'La contraseña es requerida' })
-  @MinLength(6, { message: 'La contraseña debe tener al menos 6 caracteres' })
   password: string;
 }

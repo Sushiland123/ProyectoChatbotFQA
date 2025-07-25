@@ -72,28 +72,28 @@ export class AnalyticsController {
       const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
       const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-      // Filtros base
+      // Filtros base - CAMBIO: contar todas las interacciones por defecto
       const whereClause = userId ? { cliente: { dui: userId } } : {};
 
       // Consultas paralelas para mejor performance
       const [totalInteracciones, hoyInteracciones, semanaInteracciones, mesInteracciones] =
         await Promise.all([
-          this.prisma.interaccion.count({ where: whereClause }),
+          // ARREGLADO: contar todas las interacciones si no hay userId
+          this.prisma.interaccion.count(),
           this.prisma.interaccion.count({
-            where: { ...whereClause, createdAt: { gte: startOfDay } },
+            where: { createdAt: { gte: startOfDay } }
           }),
           this.prisma.interaccion.count({
-            where: { ...whereClause, createdAt: { gte: startOfWeek } },
+            where: { createdAt: { gte: startOfWeek } }
           }),
           this.prisma.interaccion.count({
-            where: { ...whereClause, createdAt: { gte: startOfMonth } },
+            where: { createdAt: { gte: startOfMonth } }
           }),
         ]);
 
       // Obtener distribución por origen
       const origenStats = await this.prisma.interaccion.groupBy({
         by: ['origen'],
-        where: whereClause,
         _count: { origen: true },
       });
 
@@ -103,12 +103,11 @@ export class AnalyticsController {
 
       // Obtener escalamientos
       const totalEscalados = await this.prisma.interaccion.count({
-        where: { ...whereClause, escalado: true },
+        where: { escalado: true },
       });
 
       // Obtener sesiones únicas
       const sesionesUnicas = await this.prisma.interaccion.findMany({
-        where: whereClause,
         select: { sessionId: true },
         distinct: ['sessionId'],
       });

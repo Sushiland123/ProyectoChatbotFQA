@@ -4,6 +4,7 @@ import {
   Body,
   Get,
   Patch,
+  Put,
   Param,
   ParseIntPipe,
   Headers,
@@ -36,6 +37,21 @@ export class TicketController {
   // Cambiar estado del ticket - llamado desde API Gateway
   @Patch(':id/estado')
   async updateEstado(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: { estado: 'EN_PROCESO' | 'LISTO'; mensajeFinal?: string },
+    @Headers('x-user-role') userRole?: string,
+  ) {
+    if (userRole !== 'ADMIN') {
+      return { error: 'No autorizado para cambiar el estado del ticket.' };
+    }
+
+    const { estado, mensajeFinal } = body;
+    return await this.ticketService.updateEstado(id, estado, mensajeFinal);
+  }
+
+  // Endpoint compatible con API Gateway
+  @Put(':id/status')
+  async updateStatus(
     @Param('id', ParseIntPipe) id: number,
     @Body() body: { estado: 'EN_PROCESO' | 'LISTO'; mensajeFinal?: string },
     @Headers('x-user-role') userRole?: string,
