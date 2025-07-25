@@ -45,10 +45,13 @@ lerna-debug.log*
 #dialogflow
 dialogflow-key.json
 config/dialogflow-key.json
-# Ignora los JSON sensibles excepto package.json
+# Ignora los JSON sensibles excepto los necesarios
 !package.json
 !package-lock.json
+!tsconfig.json
+!nest-cli.json
 *.json
+
 
 
 # temp directory
