@@ -71,8 +71,9 @@ export class ChatController {
       return { error: 'Debe enviar un parámetro ?q= con el texto de la consulta.' };
     }
 
-    sessionId = sessionId || uuidv4();
-    const session = sessionManager.get(sessionId);
+    // Asegurar que sessionId siempre tenga un valor
+    const effectiveSessionId = sessionId || uuidv4();
+    const session = sessionManager.get(effectiveSessionId);
 
     // Si estamos esperando DUI y correo
     if (session.waitingForContact) {
@@ -101,13 +102,13 @@ export class ChatController {
       await this.prisma.interaccion.create({
         data: {
           clienteId: ticket.clienteId,
-          sessionId,
+          sessionId: effectiveSessionId,
           origen: 'IA',
           escalado: true,
         },
       });
 
-      sessionManager.clear(sessionId);
+      sessionManager.clear(effectiveSessionId);
       return {
         message: `✅ Se ha generado el ticket de soporte #${ticket.id}.\n🎧 Nuestro equipo de soporte le contactará pronto.\n📧 Recibirá actualizaciones en ${correo}.\n\n¡Gracias por su paciencia!`,
       };
@@ -119,14 +120,14 @@ export class ChatController {
     );
 
     if (needsEscalation) {
-      sessionManager.set(sessionId, { waitingForContact: true });
+      sessionManager.set(effectiveSessionId, { waitingForContact: true });
       return {
         message: '🎧 Entiendo que necesita ayuda adicional. ¿Desea escalar su problema a soporte humano? Por favor, envíe su DUI y correo electrónico en el formato: 01234567-8 correo@ejemplo.com',
       };
     }
 
     // Intentar con Dialogflow
-    const result = await this.dialogflowService.detectIntent(query, sessionId);
+    const result = await this.dialogflowService.detectIntent(query, effectiveSessionId);
 
     // Verificar si necesita fallback a IA
     const shouldUseAI = 
@@ -148,12 +149,12 @@ export class ChatController {
 
       // Verificar si la IA también falló
       if (aiResult.isFallback) {
-        sessionManager.incrementFailedAttempts(sessionId, aiResult.response);
-        const currentSession = sessionManager.get(sessionId);
+        sessionManager.incrementFailedAttempts(effectiveSessionId, aiResult.response);
+        const currentSession = sessionManager.get(effectiveSessionId);
         
         // Si ya hubo 2 o más intentos fallidos, ofrecer escalamiento
         if (currentSession.failedAttempts && currentSession.failedAttempts >= 2) {
-          sessionManager.set(sessionId, { waitingForContact: true });
+          sessionManager.set(effectiveSessionId, { waitingForContact: true });
           return {
             message: '🤔 Parece que estoy teniendo dificultades para ayudarle con su consulta específica. ¿Le gustaría que escalemos esto a nuestro equipo de soporte? Por favor, proporcione su DUI y correo electrónico en el formato: 01234567-8 correo@ejemplo.com',
           };
@@ -166,12 +167,12 @@ export class ChatController {
 
       // Respuesta exitosa de la IA, resetear contadores
       if (session.failedAttempts) {
-        sessionManager.set(sessionId, { failedAttempts: 0 });
+        sessionManager.set(effectiveSessionId, { failedAttempts: 0 });
       }
 
       await this.prisma.interaccion.create({
         data: {
-          sessionId,
+          sessionId: effectiveSessionId,
           origen: 'IA',
         },
       });
@@ -181,15 +182,15 @@ export class ChatController {
 
     console.log('✅ Respuesta de Dialogflow:', result.intent);
     // Respuesta válida de Dialogflow, resetear contadores
-    const currentSession2 = sessionManager.get(sessionId);
+    const currentSession2 = sessionManager.get(effectiveSessionId);
     if (currentSession2.failedAttempts) {
-      sessionManager.set(sessionId, { failedAttempts: 0 });
+      sessionManager.set(effectiveSessionId, { failedAttempts: 0 });
     }
 
     // Respuesta válida de Dialogflow
     await this.prisma.interaccion.create({
       data: {
-        sessionId,
+        sessionId: effectiveSessionId,
         origen: 'DIALOGFLOW',
       },
     });

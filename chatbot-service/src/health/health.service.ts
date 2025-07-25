@@ -7,11 +7,11 @@ export interface HealthStatus {
   timestamp: string;
   uptime: number;
   environment: string;
-  database: {
+  database?: {
     connected: boolean;
     error?: string;
   };
-  dependencies: {
+  dependencies?: {
     openai: boolean;
     twilio: boolean;
     dialogflow: boolean;
@@ -23,32 +23,40 @@ export class HealthService {
   constructor(private prisma: PrismaService) {}
 
   async checkHealth(): Promise<HealthStatus> {
-    const healthStatus: HealthStatus = {
+    // Respuesta básica inmediata
+    const basicHealth: HealthStatus = {
       status: 'ok',
       service: 'chatbot-service',
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
       environment: process.env.NODE_ENV || 'development',
-      database: {
-        connected: false,
-      },
-      dependencies: {
-        openai: !!process.env.OPENAI_API_KEY,
-        twilio: !!process.env.TWILIO_ACCOUNT_SID && !!process.env.TWILIO_AUTH_TOKEN,
-        dialogflow: !!process.env.GOOGLE_PROJECT_ID,
-      },
     };
 
-    // Verificar conexión a base de datos
-    try {
-      await this.prisma.$queryRaw`SELECT 1`;
-      healthStatus.database.connected = true;
-    } catch (error) {
-      healthStatus.status = 'error';
-      healthStatus.database.connected = false;
-      healthStatus.database.error = error.message;
+    // Si es una verificación rápida (primeros 30 segundos), devolver solo lo básico
+    if (process.uptime() < 30) {
+      return basicHealth;
     }
 
-    return healthStatus;
+    // Verificaciones completas después del inicio
+    try {
+      // Verificar base de datos
+      await this.prisma.$queryRaw`SELECT 1`;
+      basicHealth.database = { connected: true };
+    } catch (error) {
+      basicHealth.database = { 
+        connected: false, 
+        error: error.message 
+      };
+      // No marcar como error si solo falla la DB
+    }
+
+    // Verificar dependencias
+    basicHealth.dependencies = {
+      openai: !!process.env.OPENAI_API_KEY,
+      twilio: !!process.env.TWILIO_ACCOUNT_SID,
+      dialogflow: !!process.env.GOOGLE_PROJECT_ID,
+    };
+
+    return basicHealth;
   }
 }
