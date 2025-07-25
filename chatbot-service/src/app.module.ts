@@ -14,7 +14,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { WhatsappService } from './whatsapp/whatsapp.service';
 import { WhatsappModule } from './whatsapp/whatsapp.module';
 import { AnalyticsController } from './analytics/analytics.controller';
-import { AuthModule } from './auth/auth.module';
+
 
 @Module({
   imports: [
@@ -25,7 +25,7 @@ import { AuthModule } from './auth/auth.module';
     MailModule,
     PrismaModule,
     WhatsappModule,
-    AuthModule,
+
   ],
   controllers: [AppController, ChatController, AnalyticsController], // ✅ Ambos controllers
   providers: [AppService, TicketService, MailService, PrismaService, WhatsappService],                      // ✅ AppService

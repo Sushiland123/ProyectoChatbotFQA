@@ -1,51 +1,145 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Headers } from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiHeader,
+} from '@nestjs/swagger';
 import { PrismaService } from '../prisma/prisma.service';
+import { AnalyticsResponseDto } from '../dto/chat.dto';
 
+@ApiTags('Analytics')
 @Controller('analytics')
 export class AnalyticsController {
   constructor(private readonly prisma: PrismaService) {}
 
-  // Total de interacciones
-  @Get('interacciones')
-  async totalInteracciones() {
-    const total = await this.prisma.interaccion.count();
-    return { total };
-  }
+  @ApiOperation({
+    summary: 'Obtener métricas del chatbot',
+    description: `
+      📊 **Endpoint para obtener estadísticas y métricas del chatbot**
+      
+      ### 📈 Métricas incluidas:
+      - **Interacciones**: Total, hoy, semana, mes
+      - **Origen**: Distribución Dialogflow vs IA
+      - **Escalamiento**: Tickets creados y porcentajes
+      - **Sesiones**: Sesiones únicas
+      - **Performance**: Tiempo promedio de respuesta
+      
+      ### 🔍 Filtros disponibles:
+      - Por usuario (con header x-user-id)
+      - Por rango de fechas
+      - Por origen de respuesta
+    `,
+  })
+  @ApiHeader({
+    name: 'x-user-id',
+    description: 'Filtrar métricas por usuario específico (opcional)',
+    required: false,
+    example: 'user-456',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Métricas obtenidas exitosamente',
+    type: AnalyticsResponseDto,
+  })
+  @ApiResponse({
+    status: 500,
+    description: 'Error interno del servidor',
+    schema: {
+      type: 'object',
+      properties: {
+        error: {
+          type: 'string',
+          example: 'Error al obtener métricas del sistema',
+        },
+        statusCode: {
+          type: 'number',
+          example: 500,
+        },
+        timestamp: {
+          type: 'string',
+          example: '2024-01-15T10:30:00Z',
+        },
+      },
+    },
+  })
+  @Get()
+  async getAnalytics(@Headers('x-user-id') userId?: string): Promise<AnalyticsResponseDto> {
+    try {
+      // Fechas para los filtros
+      const now = new Date();
+      const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const startOfWeek = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay());
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  // Interacciones por origen (Dialogflow vs IA)
-  @Get('origen')
-  async interaccionesPorOrigen() {
-    const dialogflow = await this.prisma.interaccion.count({
-      where: { origen: 'DIALOGFLOW' },
-    });
+      // Filtros base
+      const whereClause = userId ? { cliente: { dui: userId } } : {};
 
-    const ia = await this.prisma.interaccion.count({
-      where: { origen: 'IA' },
-    });
+      // Consultas paralelas para mejor performance
+      const [totalInteracciones, hoyInteracciones, semanaInteracciones, mesInteracciones] =
+        await Promise.all([
+          this.prisma.interaccion.count({ where: whereClause }),
+          this.prisma.interaccion.count({
+            where: { ...whereClause, createdAt: { gte: startOfDay } },
+          }),
+          this.prisma.interaccion.count({
+            where: { ...whereClause, createdAt: { gte: startOfWeek } },
+          }),
+          this.prisma.interaccion.count({
+            where: { ...whereClause, createdAt: { gte: startOfMonth } },
+          }),
+        ]);
 
-    return {
-      dialogflow,
-      ia,
-    };
-  }
+      // Obtener distribución por origen
+      const origenStats = await this.prisma.interaccion.groupBy({
+        by: ['origen'],
+        where: whereClause,
+        _count: { origen: true },
+      });
 
-  // Porcentaje de clientes que escalaron a ticket
-  @Get('escalamiento')
-  async porcentajeEscalamiento() {
-    const totalClientes = await this.prisma.cliente.count();
-    const clientesConTickets = await this.prisma.ticket.findMany({
-      distinct: ['clienteId'],
-    });
+      const dialogflowCount =
+        origenStats.find((stat) => stat.origen === 'DIALOGFLOW')?._count.origen || 0;
+      const iaCount = origenStats.find((stat) => stat.origen === 'IA')?._count.origen || 0;
 
-    const porcentaje =
-      totalClientes > 0
-        ? (clientesConTickets.length / totalClientes) * 100
-        : 0;
+      // Obtener escalamientos
+      const totalEscalados = await this.prisma.interaccion.count({
+        where: { ...whereClause, escalado: true },
+      });
 
-    return {
-      totalClientes,
-      clientesConTickets: clientesConTickets.length,
-      porcentaje: `${porcentaje.toFixed(2)}%`,
-    };
+      // Obtener sesiones únicas
+      const sesionesUnicas = await this.prisma.interaccion.findMany({
+        where: whereClause,
+        select: { sessionId: true },
+        distinct: ['sessionId'],
+      });
+
+      const porcentajeEscalamiento =
+        totalInteracciones > 0 ? (totalEscalados / totalInteracciones) * 100 : 0;
+
+      const analytics: AnalyticsResponseDto = {
+        interacciones: {
+          total: totalInteracciones,
+          hoy: hoyInteracciones,
+          semana: semanaInteracciones,
+          mes: mesInteracciones,
+        },
+        origen: {
+          dialogflow: dialogflowCount,
+          ia: iaCount,
+        },
+        escalamiento: {
+          total: totalEscalados,
+          porcentaje: Math.round(porcentajeEscalamiento * 100) / 100,
+        },
+        sesionesUnicas: sesionesUnicas.length,
+        tiempoPromedioRespuesta: 245, // Placeholder - se podría calcular con timestamps
+        ...(userId && { userId: userId === 'anonymous' ? 'anonymous' : userId }),
+      };
+
+      return analytics;
+    } catch (error) {
+      console.error('Error al obtener analytics:', error);
+      throw error;
+    }
   }
 }

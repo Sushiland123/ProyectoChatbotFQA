@@ -5,44 +5,42 @@ import {
   Get,
   Patch,
   Param,
-  UseGuards,
   ParseIntPipe,
+  Headers,
 } from '@nestjs/common';
 import { TicketService } from './ticket.service';
-import { JwtAuthGuard } from '../auth/jwt/jwt.guard';
-import { User } from '../auth/user/user.decorator';
 
 @Controller('tickets')
 export class TicketController {
   constructor(private readonly ticketService: TicketService) {}
 
-  // Crear ticket - cualquier cliente puede hacerlo
-  @UseGuards(JwtAuthGuard)
+  // Crear ticket - llamado desde API Gateway
   @Post()
-  async createTicket(@Body() body: { asunto: string; dui: string }) {
+  async createTicket(
+    @Body() body: { asunto: string; dui: string },
+    @Headers('x-user-id') userId?: string,
+  ) {
     const { asunto, dui } = body;
     return await this.ticketService.createTicket(asunto, dui);
   }
 
-  // Obtener todos los tickets - solo admin
-  @UseGuards(JwtAuthGuard)
+  // Obtener todos los tickets - llamado desde API Gateway
   @Get()
-  async getTickets(@User('rol') rol: string) {
-    if (rol !== 'ADMIN') {
+  async getTickets(@Headers('x-user-role') userRole?: string) {
+    if (userRole !== 'ADMIN') {
       return { error: 'Solo los administradores pueden ver los tickets.' };
     }
     return await this.ticketService.getTickets();
   }
 
-  // Cambiar estado del ticket - solo admin
-  @UseGuards(JwtAuthGuard)
+  // Cambiar estado del ticket - llamado desde API Gateway
   @Patch(':id/estado')
   async updateEstado(
     @Param('id', ParseIntPipe) id: number,
     @Body() body: { estado: 'EN_PROCESO' | 'LISTO'; mensajeFinal?: string },
-    @User('rol') rol: string,
+    @Headers('x-user-role') userRole?: string,
   ) {
-    if (rol !== 'ADMIN') {
+    if (userRole !== 'ADMIN') {
       return { error: 'No autorizado para cambiar el estado del ticket.' };
     }
 

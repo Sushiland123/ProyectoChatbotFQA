@@ -1,15 +1,34 @@
 import {
   Controller,
   Get,
+  Post,
   Query,
+  Body,
+  Headers,
+  HttpStatus,
+  HttpException,
 } from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBody,
+  ApiQuery,
+  ApiHeader,
+} from '@nestjs/swagger';
 import { DialogflowService } from '../dialogflow/dialogflow.service';
 import { AiService } from '../ai/ai.service';
 import { TicketService } from '../ticket/ticket.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { sessionManager } from './session.manager';
 import { v4 as uuidv4 } from 'uuid';
+import {
+  SendMessageDto,
+  ChatResponseDto,
+  ChatErrorResponseDto,
+} from '../dto/chat.dto';
 
+@ApiTags('Chat')
 @Controller('chat')
 export class ChatController {
   constructor(
@@ -19,8 +38,35 @@ export class ChatController {
     private readonly prisma: PrismaService,
   ) {}
 
+  @ApiOperation({
+    summary: 'Enviar mensaje al chatbot (Legacy)',
+    description: 'Endpoint legacy para compatibilidad. Recomendado usar POST /chat/message',
+  })
+  @ApiQuery({ name: 'q', description: 'Mensaje del usuario', example: '¿Cuáles son sus horarios?' })
+  @ApiQuery({ name: 'session', description: 'ID de sesión (opcional)', required: false })
+  @ApiResponse({ status: 200, description: 'Respuesta exitosa del chatbot' })
   @Get()
   async chat(@Query('q') query: string, @Query('session') sessionId?: string) {
+    return this.handleMessage(query, sessionId);
+  }
+
+  @ApiOperation({
+    summary: 'Enviar mensaje al chatbot',
+    description: 'Endpoint principal para interactuar con el chatbot. Incluye fallback automático y escalamiento.',
+  })
+  @ApiBody({ type: SendMessageDto, description: 'Datos del mensaje' })
+  @ApiHeader({ name: 'x-user-id', description: 'ID del usuario (opcional)', required: false })
+  @ApiResponse({ status: 201, description: 'Mensaje procesado exitosamente' })
+  @ApiResponse({ status: 400, description: 'Datos de entrada inválidos' })
+  @Post('message')
+  async sendMessage(
+    @Body() body: SendMessageDto,
+    @Headers('x-user-id') userId?: string,
+  ) {
+    return this.handleMessage(body.message, body.sessionId, userId);
+  }
+
+  private async handleMessage(query: string, sessionId?: string, userId?: string) {
     if (!query) {
       return { error: 'Debe enviar un parámetro ?q= con el texto de la consulta.' };
     }

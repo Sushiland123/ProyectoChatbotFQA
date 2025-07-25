@@ -1,0 +1,340 @@
+{
+  "info": {
+    "name": "ChatbotFQA API Tests",
+    "description": "Pruebas completas de la API del proyecto ChatbotFQA",
+    "version": "1.0.0"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "jwt_token",
+      "value": "{{jwt_token}}"
+    },
+    {
+      "key": "admin_token", 
+      "value": "{{admin_token}}"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Autenticación",
+      "item": [
+        {
+          "name": "1.1 Registrar Usuario",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Usuario Test\",\n  \"email\": \"test@example.com\",\n  \"password\": \"123456\",\n  \"rol\": \"USUARIO\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "1.2 Login Usuario",
+          "request": {
+            "method": "POST", 
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"123456\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.environment.set('jwt_token', response.token);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "1.3 Registrar Admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type", 
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nombre\": \"Admin Test\",\n  \"email\": \"admin@example.com\",\n  \"password\": \"admin123\",\n  \"rol\": \"ADMIN\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "1.4 Login Admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw", 
+              "raw": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const response = pm.response.json();",
+                  "    pm.environment.set('admin_token', response.token);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "1.5 Obtener Perfil",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/profile",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "profile"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Chatbot",
+      "item": [
+        {
+          "name": "2.1 Mensaje Chatbot (POST)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": \"Hola, ¿cómo estás?\",\n  \"sessionId\": \"test-session-123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/chatbot/message",
+              "host": ["{{base_url}}"],
+              "path": ["chatbot", "message"]
+            }
+          }
+        },
+        {
+          "name": "2.2 Mensaje Chatbot (GET)",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/chatbot/message?q=¿Cuáles son sus horarios?&session=test-123",
+              "host": ["{{base_url}}"],
+              "path": ["chatbot", "message"],
+              "query": [
+                {
+                  "key": "q",
+                  "value": "¿Cuáles son sus horarios?"
+                },
+                {
+                  "key": "session", 
+                  "value": "test-123"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "2.3 Analytics (Con JWT)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/chatbot/analytics",
+              "host": ["{{base_url}}"],
+              "path": ["chatbot", "analytics"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. FAQ",
+      "item": [
+        {
+          "name": "3.1 Obtener FAQs",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/faq",
+              "host": ["{{base_url}}"],
+              "path": ["faq"]
+            }
+          }
+        },
+        {
+          "name": "3.2 Crear FAQ",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pregunta\": \"¿Cuál es el horario de atención?\",\n  \"respuesta\": \"Lunes a viernes de 8:00 AM a 6:00 PM\",\n  \"grupoId\": 1\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/faq",
+              "host": ["{{base_url}}"],
+              "path": ["faq"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Tickets",
+      "item": [
+        {
+          "name": "4.1 Crear Ticket",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{jwt_token}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"asunto\": \"Problema con mi cuenta\",\n  \"dui\": \"01234567-8\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/chatbot/ticket",
+              "host": ["{{base_url}}"],
+              "path": ["chatbot", "ticket"]
+            }
+          }
+        },
+        {
+          "name": "4.2 Ver Tickets (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{admin_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/chatbot/tickets",
+              "host": ["{{base_url}}"],
+              "path": ["chatbot", "tickets"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Tests de Error",
+      "item": [
+        {
+          "name": "5.1 JWT Inválido",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer token_falso"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/profile",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "profile"]
+            }
+          }
+        },
+        {
+          "name": "5.2 Sin JWT",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{base_url}}/chatbot/analytics",
+              "host": ["{{base_url}}"],
+              "path": ["chatbot", "analytics"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
