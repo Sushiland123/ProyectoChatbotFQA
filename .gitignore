@@ -1,4 +1,10 @@
 # ===== CREDENCIALES Y ARCHIVOS SENSIBLES =====
+# Scripts de deployment con credenciales
+deploy-simple.bat
+deploy-with-dialogflow.bat
+deploy-with-dialogflow.ps1
+DIALOGFLOW-DEPLOY-GUIDE.md
+
 # Ignora JSON sensibles, pero no los necesarios para build
 **/dialogflow-key.json
 **/config/*-key.json
