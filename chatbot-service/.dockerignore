@@ -1,0 +1,19 @@
+node_modules
+npm-debug.log
+.git
+.gitignore
+README.md
+.env
+.nyc_output
+coverage
+.DS_Store
+*.log
+test
+tests
+**/*.test.js
+**/*.spec.js
+.vscode
+.idea
+
+# ⚠️ dist debe incluirse para que Docker lo empaquete
+# dist
