@@ -4,8 +4,8 @@ import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class FaqClientService {
-  private faqUrl = 'http://localhost:3002/faq';
-  private grupoUrl = 'http://localhost:3002/grupo-faq';
+  private faqUrl = process.env.FAQ_SERVICE_URL || 'http://faq-service.railway.internal:3002/faq';
+  private grupoUrl = process.env.FAQ_SERVICE_URL || 'http://faq-service.railway.internal:3002/grupo-faq';
 
   constructor(private readonly http: HttpService) {}
 

@@ -1,5 +1,5 @@
 # compiled output
-/dist
+# /dist  <- Comentado para incluir dist en deploy
 /node_modules
 /build
 

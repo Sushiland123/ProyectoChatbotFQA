@@ -76,10 +76,11 @@ async function bootstrap() {
     },
   });
 
-  await app.listen(process.env.PORT ?? 3002);
+  const port = process.env.PORT || 3002;
+  await app.listen(port, '0.0.0.0');
   
-  console.log('❓ FAQ Service corriendo en http://localhost:3002');
-  console.log('📚 Documentación Swagger disponible en http://localhost:3002/api/docs');
+  console.log(`❓ FAQ Service corriendo en puerto ${port}`);
+  console.log(`📚 Documentación Swagger disponible en http://localhost:${port}/api/docs`);
   console.log('🔍 Búsqueda: GET /faq/search');
   console.log('📝 CRUD: GET, POST, PUT, DELETE /faq');
 }

@@ -1,0 +1,13 @@
+[build]
+builder = "NIXPACKS"
+
+[build.nixpacksConfig]
+nodeVersion = "18"
+
+[deploy]
+startCommand = "npx prisma generate && npx prisma migrate deploy && npm run build && npm run start:prod"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+
+[experimental]
+incremental = true

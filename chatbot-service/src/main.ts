@@ -72,12 +72,13 @@ async function bootstrap() {
     },
   });
 
-  await app.listen(process.env.PORT ?? 3003);
+  const port = process.env.PORT || 3003;
+  await app.listen(port, '0.0.0.0');
   
-  console.log('🚀 Chatbot Service corriendo en http://localhost:3003');
-  console.log('📊 Analytics disponible en http://localhost:3003/analytics');
-  console.log('🤖 Chat disponible en http://localhost:3003/chat/message');
-  console.log('📚 Documentación Swagger disponible en http://localhost:3003/api/docs');
+  console.log(`🚀 Chatbot Service corriendo en puerto ${port}`);
+  console.log(`📊 Analytics disponible en puerto ${port}/analytics`);
+  console.log(`🤖 Chat disponible en puerto ${port}/chat/message`);
+  console.log(`📚 Documentación Swagger disponible en puerto ${port}/api/docs`);
 }
 
 bootstrap();

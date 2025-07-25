@@ -1,0 +1,11 @@
+[phases.setup]
+cmds = ["cp package-production.json package.json"]
+
+[phases.build]
+cmds = ["npm ci --legacy-peer-deps", "npm run build"]
+
+[phases.start]
+cmd = "node dist/main.js"
+
+[variables]
+NODE_ENV = "production"

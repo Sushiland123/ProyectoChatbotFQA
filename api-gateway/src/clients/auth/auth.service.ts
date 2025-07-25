@@ -8,7 +8,7 @@ import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class AuthClientService {
-  private baseUrl = 'http://localhost:3001/auth';
+  private baseUrl = process.env.AUTH_SERVICE_URL || 'http://auth-service.railway.internal:3001/auth';
 
   constructor(private readonly http: HttpService) {}
 

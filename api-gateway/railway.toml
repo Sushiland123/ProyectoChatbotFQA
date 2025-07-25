@@ -1,0 +1,16 @@
+[build]
+builder = "NIXPACKS"
+watchPatterns = ["api-gateway/**"]
+
+[build.nixpacksConfig]
+nodeVersion = "18"
+
+[deploy]
+startCommand = "npm run build && npm run start:prod"
+healthcheckPath = "/health"
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+
+[experimental]
+incremental = true

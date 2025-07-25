@@ -4,7 +4,7 @@ import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class ChatbotClientService {
-  private baseUrl = 'http://localhost:3003';
+  private baseUrl = process.env.CHATBOT_SERVICE_URL || 'http://chatbot-service.railway.internal:3003';
 
   constructor(private readonly http: HttpService) {}
 
