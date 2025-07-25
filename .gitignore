@@ -1,10 +1,15 @@
 # ===== CREDENCIALES Y ARCHIVOS SENSIBLES =====
-# Dialogflow credentials (IMPORTANTE)
+# Ignora JSON sensibles, pero no los necesarios para build
 **/dialogflow-key.json
-**/config/dialogflow-key.json
 **/config/*-key.json
 **/credentials.json
 **/service-account*.json
+**/config/database.json
+**/config/secrets.json
+!**/tsconfig.json
+!**/nest-cli.json
+!**/package.json
+
 
 # Variables de entorno
 **/.env
