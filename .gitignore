@@ -109,8 +109,8 @@ Desktop.ini
 
 # ===== DOCKER =====
 # Docker
-.dockerignore
-Dockerfile.prod
+#.dockerignore
+#Dockerfile.prod
 
 # ===== TESTING =====
 # Test coverage
