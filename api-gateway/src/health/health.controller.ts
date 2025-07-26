@@ -1,6 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { HealthService } from './health.service';
+import { HealthService } from '../health/health.service';
 
 @ApiTags('Health')
 @Controller('health')
@@ -42,7 +42,7 @@ export class HealthController {
     }
   })
   @Get()
-  async getHealth() {
+  async getHealth(): Promise<any> {
     return this.healthService.getSystemHealth();
   }
 

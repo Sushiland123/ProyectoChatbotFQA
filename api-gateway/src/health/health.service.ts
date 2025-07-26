@@ -2,13 +2,13 @@ import { Injectable } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
 
-interface ServiceHealth {
+export interface ServiceHealth {
   status: 'ok' | 'error' | 'timeout';
   responseTime?: string;
   error?: string;
 }
 
-interface SystemHealth {
+export interface SystemHealth {
   status: 'ok' | 'degraded' | 'down';
   timestamp: string;
   services: Record<string, ServiceHealth>;
