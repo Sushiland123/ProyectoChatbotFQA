@@ -5,12 +5,15 @@ import * as dialogflow from 'dialogflow';
 export class DialogflowService {
   private sessionClient: dialogflow.SessionsClient;
   private projectId: string;
+  private isConfigured: boolean = false;
 
   constructor() {
     try {
       const key = process.env.DIALOGFLOW_KEY;
       if (!key) {
-        throw new Error('❌ Variable DIALOGFLOW_KEY no está definida');
+        console.warn('⚠️  DIALOGFLOW_KEY no está definida - Dialogflow deshabilitado');
+        this.isConfigured = false;
+        return;
       }
 
       const credentials = JSON.parse(key);
@@ -22,14 +25,27 @@ export class DialogflowService {
         credentials,
       });
 
+      this.isConfigured = true;
       console.log('✅ Dialogflow configurado desde DIALOGFLOW_KEY');
     } catch (error) {
       console.error('❌ Error al inicializar Dialogflow:', error);
-      throw new Error(`Failed to initialize Dialogflow: ${error.message}`);
+      console.warn('⚠️  Continuando sin Dialogflow - Solo se usará IA como fallback');
+      this.isConfigured = false;
     }
   }
 
   async detectIntent(userText: string, sessionId: string) {
+    // Si Dialogflow no está configurado, devolver respuesta de fallback
+    if (!this.isConfigured) {
+      console.log('⚠️  Dialogflow no configurado - Usando fallback directo a IA');
+      return {
+        intent: 'Default Fallback Intent',
+        response: '',
+        isFallback: true,
+        confidence: 0,
+      };
+    }
+
     try {
       const sessionPath = this.sessionClient.sessionPath(this.projectId, sessionId);
 
