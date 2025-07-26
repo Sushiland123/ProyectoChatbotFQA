@@ -16,6 +16,9 @@ import { ChatbotClientService } from './clients/chatbot/chatbot.service';
 import { TicketController } from './clients/ticket/ticket.controller';
 import { TicketClientService } from './clients/ticket/ticket.service';
 
+import { HealthController } from './health/health.controller';
+import { HealthService } from './health/health.service';
+
 import { JwtStrategy } from './clients/auth/jwt.strategy';
 
 @Module({
@@ -25,12 +28,14 @@ import { JwtStrategy } from './clients/auth/jwt.strategy';
     PassportModule,
   ],
   controllers: [
+    HealthController,
     AuthController,
     FaqController,
     ChatbotController,
     TicketController,
   ],
   providers: [
+    HealthService,
     AuthClientService,
     FaqClientService,
     ChatbotClientService,
